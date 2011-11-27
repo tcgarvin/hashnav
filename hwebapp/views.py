@@ -6,7 +6,7 @@ from urllib import quote_plus #for the hack below
 def front_page(request):
     # Here, we do the url-encoding, though it should probably be handled by
     # either the template or by javascript, depending on the circumstances.
-    return {"search_term": quote_plus("#thinksocial")};
+    return {"search_term": quote_plus("#social")};
 
 @view_config(name='', renderer='json', context=hwebapp.resources.Hashtag)
 def view_tag(context, request):
