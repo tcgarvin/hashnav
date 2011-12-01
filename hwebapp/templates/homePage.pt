@@ -70,6 +70,13 @@ function remove_current_graph() {
     resize();
 }
 
+// called from the click event on a node.
+function new_graph_from_click() {
+    var n = d3.select(this).text();
+    remove_current_graph();
+    make_graph(get_clean_uri(n)); 
+}
+
 //d3.json("graph.json", function(json) {
 //d3.json("${request.static_url('hwebapp:static/data/graphExample.json')}", function(json) {
 
@@ -98,6 +105,7 @@ d3.json(queryurl, function(json) {
         .data(json.nodes)
         .enter().append("svg:g")
         .attr("class", "node")
+        .on("click", new_graph_from_click) 
         .call(force.drag);
 
     node.append("svg:circle")
