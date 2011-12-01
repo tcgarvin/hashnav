@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>Hashnav</title>
+<title>Hashnav.</title>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
 <meta name="keywords" content="python web application" />
 <meta name="description" content="pyramid web application" />
@@ -22,10 +22,12 @@
 
 var typeclass = { user: "nodeuser", url: "nodeurl", tag: "nodetag" };
 var testtypes = ["nodeuser", "nodeurl", "nodetag", "", "", "", "","","","","","","","","","","","","",""];
-
+var vis; 
+var force, link, node;
 var w = 700,
     h = 500;
 
+function resize() {
 // get the size of the window from the browser and use that
     if (document.body && document.body.offsetWidth) {
         w = document.body.offsetWidth;
@@ -42,21 +44,39 @@ var w = 700,
         h = window.innerHeight;
     }
 // cheap hack to get rid of scroll bars
-    w = w-20;
-    h = h-20;
-//document.writeln('Window width = '+w);
-//document.writeln('Window height = '+h);
+    w = w-22;
+    h = h-62;
 
-var vis = d3.select("body").append("svg:svg")
-.attr("width", w)
-.attr("height", h);
+    vis = d3.select("body").append("svg:svg")
+        .attr("width", w)
+        .attr("height", h);
+}
+
+// not really necessary, but allowed for debug/output instead of just 
+// using encodeURIComponent()
+function get_clean_uri(i) {
+    //document.write(i);
+    var user_input = encodeURIComponent(i);
+    return user_input;
+}
+
+// every time we remove the current graph from the screen, we'll check to
+// see if the window has been resized and adjust for it
+function remove_current_graph() {
+    vis.data([]);
+    link.remove();
+    node.remove();
+    vis.remove();
+    resize();
+}
 
 //d3.json("graph.json", function(json) {
 //d3.json("${request.static_url('hwebapp:static/data/graphExample.json')}", function(json) {
 
-var queryurl = "${request.host_url}/api/tag/${search_term}/neighborhood";
+function make_graph(query) {
+var queryurl = "${request.host_url}/api/tag/"+query+"/neighborhood";
 d3.json(queryurl, function(json) {
-    var force = self.force = d3.layout.force()
+    force = self.force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.links)
         .gravity(.05)
@@ -65,7 +85,7 @@ d3.json(queryurl, function(json) {
         .size([w, h])
         .start();
 
-    var link = vis.selectAll("line.link")
+    link = vis.selectAll("line.link")
         .data(json.links)
         .enter().append("svg:line")
         .attr("class", "link")
@@ -74,9 +94,9 @@ d3.json(queryurl, function(json) {
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 
-    var node = vis.selectAll("g.node")
+    node = vis.selectAll("g.node")
         .data(json.nodes)
-      .enter().append("svg:g")
+        .enter().append("svg:g")
         .attr("class", "node")
         .call(force.drag);
 
@@ -98,8 +118,23 @@ d3.json(queryurl, function(json) {
 
       node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
     });
-});
+})};
 
 </script>
+
+<form name="query_form" action="" onsubmit="get_clean_uri(document.forms['query_form'].elements[0].value)">
+    <input type=text size=20 name=query_text />
+    <button type="button" onclick="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))"> go! </button>
+    <!-- I couldn't get the html onsubmit event to work so for now the button
+        above will have to work. -->
+    <!-- input type="submit" value="go!" /-->
+</form>
+
+<script type="text/javascript">
+    // initialize the graph with #social as the query
+    resize();
+    make_graph(get_clean_uri('#social'));
+</script>
+
 </body>
 </html>
