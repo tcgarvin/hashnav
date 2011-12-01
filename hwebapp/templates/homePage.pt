@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>The Pyramid Web Application Development Framework</title>
+<title>Hashnav</title>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
 <meta name="keywords" content="python web application" />
 <meta name="description" content="pyramid web application" />
@@ -23,16 +23,39 @@
 var typeclass = { user: "nodeuser", url: "nodeurl", tag: "nodetag" };
 var testtypes = ["nodeuser", "nodeurl", "nodetag", "", "", "", "","","","","","","","","","","","","",""];
 
-var w = 960,
-    h = 500
+var w = 700,
+    h = 500;
+
+// get the size of the window from the browser and use that
+    if (document.body && document.body.offsetWidth) {
+        w = document.body.offsetWidth;
+        h = document.body.offsetHeight;
+    }
+    if (document.compatMode=='CSS1Compat' &&
+        document.documentElement &&
+        document.documentElement.offsetWidth ) {
+        w = document.documentElement.offsetWidth;
+        h = document.documentElement.offsetHeight;
+    }
+    if (window.innerWidth && window.innerHeight) {
+        w = window.innerWidth;
+        h = window.innerHeight;
+    }
+// cheap hack to get rid of scroll bars
+    w = w-20;
+    h = h-20;
+//document.writeln('Window width = '+w);
+//document.writeln('Window height = '+h);
 
 var vis = d3.select("body").append("svg:svg")
-    .attr("width", w)
-    .attr("height", h);
+.attr("width", w)
+.attr("height", h);
 
 //d3.json("graph.json", function(json) {
 //d3.json("${request.static_url('hwebapp:static/data/graphExample.json')}", function(json) {
-d3.json("${request.host_url}/api/tag/${search_term}/neighborhood", function(json) {
+
+var queryurl = "${request.host_url}/api/tag/${search_term}/neighborhood";
+d3.json(queryurl, function(json) {
     var force = self.force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.links)
