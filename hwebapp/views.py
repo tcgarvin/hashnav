@@ -10,7 +10,6 @@ def front_page(request):
 
 @view_config(name='', renderer='json', context=hwebapp.resources.Hashtag)
 def view_tag(context, request):
-    print "In get_neighbors()"
     returnable = {'nodes': [], 'links':[]}
     returnable['nodes'].append({'name': context.node['uid'], 'group': 1})
     
