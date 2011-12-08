@@ -12,9 +12,9 @@
 .link { stroke: #ccc; }
 .nodetext { pointer-events: none; font: 10px sans-serif; }
 .nodecircle { stroke-width: 2px; stroke: #ccc }
-.nodeuser { fill: #1B9623 }
-.nodetag { fill: #231B96 }
-.nodeurl { fill: #96231B }
+.nodeuser { fill: #1B9623 } //green
+.nodetag { fill: #231B96 } //blue
+.nodeurl { fill: #96231B } //red
 </style>
 </head>
 <body>
@@ -86,9 +86,10 @@ d3.json(queryurl, function(json) {
     force = self.force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.links)
-        .gravity(.05)
-        .distance(100)
-        .charge(-100)
+        .gravity(.15)
+        .friction(.3)
+        .distance(140)
+        .charge(-80)
         .size([w, h])
         .start();
 
@@ -130,12 +131,12 @@ d3.json(queryurl, function(json) {
 
 </script>
 
-<form name="query_form" action="" onsubmit="get_clean_uri(document.forms['query_form'].elements[0].value)">
+<form name="query_form" action="" onsubmit="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))">
     <input type=text size=20 name=query_text />
     <button type="button" onclick="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))"> go! </button>
     <!-- I couldn't get the html onsubmit event to work so for now the button
         above will have to work. -->
-    <!-- input type="submit" value="go!" /-->
+    <input type="submit" value="html-version!">
 </form>
 
 <script type="text/javascript">
