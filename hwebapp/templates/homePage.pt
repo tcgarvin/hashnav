@@ -12,9 +12,9 @@
 .link { stroke: #ccc; }
 .nodetext { pointer-events: none; font: 10px sans-serif; }
 .nodecircle { stroke-width: 2px; stroke: #ccc }
-.nodeuser { fill: #1B9623 } //green
-.nodetag { fill: #231B96 } //blue
-.nodeurl { fill: #96231B } //red
+.nodeuser { fill: #1B9623 } 
+.nodetag { fill: #231B96 } 
+.nodeurl { fill: #96231B }
 </style>
 </head>
 <body>
