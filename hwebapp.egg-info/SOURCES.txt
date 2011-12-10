@@ -6,6 +6,7 @@ production.ini
 setup.cfg
 setup.py
 hwebapp/__init__.py
+hwebapp/graph.py
 hwebapp/resources.py
 hwebapp/tests.py
 hwebapp/views.py
@@ -26,4 +27,7 @@ hwebapp/static/pylons.css
 hwebapp/static/pyramid-small.png
 hwebapp/static/pyramid.png
 hwebapp/static/transparent.gif
+hwebapp/templates/graphExample.pt
+hwebapp/templates/homePage.pt
 hwebapp/templates/mytemplate.pt
+hwebapp/templates/staticData.pt
