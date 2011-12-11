@@ -86,10 +86,11 @@ d3.json(queryurl, function(json) {
     force = self.force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.links)
-        .gravity(.15)
+        .gravity(.38)
         .friction(.3)
-        .distance(140)
-        .charge(-80)
+        .distance(h/2.5)
+        .linkStrength(.7)
+        .charge(-900)
         .size([w, h])
         .start();
 
@@ -131,8 +132,9 @@ d3.json(queryurl, function(json) {
 
 </script>
 
-<form name="query_form" action="" onsubmit="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))">
-    <input type=text size=20 name=query_text />
+<form name="query_form" action="" onsubmit="">
+    <!--input type=text size=20 name=query_text onblur="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))"/-->
+    <input type=text size=20 name=query_text onkeypress="if(event.keyCode==13) {remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))}"/>
     <button type="button" onclick="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))"> go! </button>
     <!-- I couldn't get the html onsubmit event to work so for now the button
         above will have to work. -->
