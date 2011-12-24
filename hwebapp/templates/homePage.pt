@@ -9,23 +9,87 @@
 <script type="text/javascript" src="http://mbostock.github.com/d3/d3.layout.js"></script>
 <script type="text/javascript" src="http://mbostock.github.com/d3/d3.geom.js"></script>
 <style type="text/css">
+body { padding: 0px; }
 .link { stroke: #ccc; }
-.nodetext { pointer-events: none; font: 10px sans-serif; }
+.nodetextdark { font: 10px sans-serif; color:blue; }
+.nodetextlight { font: 10px sans-serif; color:red; }
 .nodecircle { stroke-width: 2px; stroke: #ccc }
 .nodeuser { fill: #1B9623 } 
 .nodetag { fill: #231B96 } 
 .nodeurl { fill: #96231B }
+.search_bar {
+    background-color: #effeff;
+    padding: 5px;
+    position: fixed;
+    top: 6px;
+    left: 6px;
+}
+div.sidebar {
+    font: 14px sans-serif;
+    text-align: center;
+    font-weight: bold;
+    width: 180px;
+    height: 97%;
+    margin: 10px;
+    background-color: #effeff;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+}
+div.sidebar ul {
+   list-style-type:none; 
+   padding-top: 0px;
+   padding-left: 18px;
+}
+div.sidebar li {
+    font: 13px sans-serif;
+    font-weight: normal;
+    text-align: left;
+    padding-top: 8px;
+}
+div.sidebar a {
+    color: gray;
+}
+div.sidebar a:hover {
+    color: black;
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
-<script type="text/javascript">
 
+<div class="search_bar">
+<form id="query_form" name="search_form" action="" onsubmit="return ignore_form()">
+    <input type=text size=20 name="query_text" onkeypress="if(event.keyCode==13) {new_graph_from_form(this.form.query_text.value);}"/>
+    <button type="button" onclick="new_graph_from_form(this.form.query_text.value);"> go! </button>
+</form>
+</div>
+
+<div class="sidebar">
+   <ul id="tweet_links" name="tweet_links_ul">Related Links.</ul> 
+</div>
+
+<script type="text/javascript">
 var typeclass = { user: "nodeuser", url: "nodeurl", tag: "nodetag" };
 var testtypes = ["nodeuser", "nodeurl", "nodetag", "", "", "", "","","","","","","","","","","","","",""];
 var vis; 
 var force, link, node;
 var w = 700,
     h = 500;
+var urls = new Array();
+var urls_count = new Array();
+var urls_data = new Array();
+var previous_url;
+
+try {
+    form.addEventListener("submit", ignore_form);
+} catch(e) {
+    //form.attachEvent("submit", ignore_form);
+}
+
+function ignore_form() {
+    return false;
+}
 
 function resize() {
 // get the size of the window from the browser and use that
@@ -44,8 +108,8 @@ function resize() {
         h = window.innerHeight;
     }
 // cheap hack to get rid of scroll bars
-    w = w-22;
-    h = h-62;
+    w = w-210;
+    h = h-21;
 
     vis = d3.select("body").append("svg:svg")
         .attr("width", w)
@@ -58,8 +122,7 @@ function get_clean_uri(i) {
     //document.write(i);
     var user_input = encodeURIComponent(i);
     return user_input;
-}
-
+} 
 // every time we remove the current graph from the screen, we'll check to
 // see if the window has been resized and adjust for it
 function remove_current_graph() {
@@ -70,26 +133,36 @@ function remove_current_graph() {
     resize();
 }
 
-// called from the click event on a node.
-function new_graph_from_click() {
-    var n = d3.select(this).text();
+function new_graph_from_form(n) {
+    clear_tweet_links();
     remove_current_graph();
     make_graph(get_clean_uri(n)); 
 }
 
-//d3.json("graph.json", function(json) {
-//d3.json("${request.static_url('hwebapp:static/data/graphExample.json')}", function(json) {
+// called from the click event on a node.
+function new_graph_from_click() {
+    var n = d3.select(this).text();
+    //alert(index);
+    new_graph_from_form(n);
+    document.search_form.query_text.value = n;
+}
 
 function make_graph(query) {
-var queryurl = "${request.host_url}/api/tag/"+query+"/neighborhood";
+    var id=0;
+    var x = h;
+    if (w < h) {
+        x = w;
+    }
+    var queryurl = "${request.host_url}/api/tag/"+query+"/neighborhood";
 d3.json(queryurl, function(json) {
     force = self.force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.links)
-        .gravity(.15)
+        .gravity(.38)
         .friction(.3)
-        .distance(140)
-        .charge(-80)
+        .distance(x/2.8)
+        .linkStrength(.7)
+        .charge(-1900)
         .size([w, h])
         .start();
 
@@ -97,6 +170,8 @@ d3.json(queryurl, function(json) {
         .data(json.links)
         .enter().append("svg:line")
         .attr("class", "link")
+        .attr("source", function(d) { id++; return id; })
+        //.on("click", function(d) { alert("source: " + d3.select(this).attr("source")) }) 
         .attr("x1", function(d) { return d.source.x; })
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
@@ -106,6 +181,7 @@ d3.json(queryurl, function(json) {
         .data(json.nodes)
         .enter().append("svg:g")
         .attr("class", "node")
+        .attr("index", function(d) { return d.index; })
         .on("click", new_graph_from_click) 
         .call(force.drag);
 
@@ -114,11 +190,15 @@ d3.json(queryurl, function(json) {
         .attr("r", "8px");
 
     node.append("svg:text")
-        .attr("class", "nodetext")
+        .attr("class", "nodetextlight")
         .attr("dx", 12)
         .attr("dy", ".35em")
         .text(function(d) { return d.name });
-
+    
+    node.each(getLinks);
+    load_tweet_links();
+    //alert(urls.length);
+        
     force.on("tick", function() {
       link.attr("x1", function(d) { return d.source.x; })
           .attr("y1", function(d) { return d.source.y; })
@@ -127,23 +207,83 @@ d3.json(queryurl, function(json) {
 
       node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
     });
-})};
+})}
 
+function getLinks() {
+    var node_text = d3.select(this).text();
+    var urls_length = urls.length;
+    if(node_text.indexOf("http") == 0) {
+        //the add the url to the list and remove the node?
+        urls.push(node_text);
+        var link_node = d3.select(this);
+        var node_index = d3.select(this).attr("index");
+        //alert(node_index);
+        var link_line = d3.selectAll("line.link[source=\"" + node_index + "\"]");
+        link_node.remove();
+        link_line.remove();
+    }
+}
+
+// used to remove duplicate links and also sort them in order of numbers of
+// occurance... doesn't work correctly right now (at least the last part doesn't)
+// so I'll add a TODO: here.
+function sort_tweet_links() {
+    var node_text;
+    var new_urls = new Array();
+    urls.sort();
+    for(var i=0; i < urls.length; i++) {
+        node_text = urls[i];
+        if(node_text != new_urls[i-1]) {
+            new_urls.push(node_text);
+            urls_count[i] = 1;
+        }
+        else {
+            urls_count[i-1]++;
+        }
+    }
+    urls = new_urls;
+    
+    urls_data = new Array(2);
+    urls_data[0] = new Array(urls.length);
+    urls_data[1] = new Array(urls.length);
+    
+    for(var j=0; j<urls.length; j++) {
+        urls_data[0][j] = urls_count[j];
+        urls_data[1][j] = urls[j];
+    }
+    urls_data.sort(sort_descending);
+}
+
+function sort_descending(a,b) {
+    a = a[0];
+    b = b[0];
+    return a == b ? 0 : (a < b ? 1 : -1)
+}
+
+// put all the links from the graph into the list on the right side of the page
+function load_tweet_links() {
+    sort_tweet_links();
+    var new_lis = "";
+    var i;
+    for (i=0; i < urls.length; i++) {
+        //new_lis +="<li> (" + urls_data[0][i] + ") <a href=\"" + urls_data[1][i] + "\" target=\"_blank\">" + 
+        new_lis +="<li> <a href=\"" + urls_data[1][i] + "\" target=\"_blank\">" + 
+            urls_data[1][i] + "</li>";
+    }
+    document.getElementById('tweet_links').innerHTML += new_lis;
+}
+
+function clear_tweet_links() {
+    urls.length = 0;
+    urls_data.length = 0;
+    urls_count.length = 0;
+    document.getElementById("tweet_links").innerHTML = "Related Links."; 
+}
+
+// initialize the graph with #social as the query
+resize();
+make_graph(get_clean_uri('#social')); 
+document.search_form.query_text.value = '#social';
 </script>
-
-<form name="query_form" action="" onsubmit="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))">
-    <input type=text size=20 name=query_text />
-    <button type="button" onclick="remove_current_graph(); make_graph(get_clean_uri(this.form.query_text.value))"> go! </button>
-    <!-- I couldn't get the html onsubmit event to work so for now the button
-        above will have to work. -->
-    <input type="submit" value="html-version!">
-</form>
-
-<script type="text/javascript">
-    // initialize the graph with #social as the query
-    resize();
-    make_graph(get_clean_uri('#social'));
-</script>
-
 </body>
 </html>

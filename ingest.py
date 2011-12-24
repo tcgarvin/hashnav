@@ -5,6 +5,7 @@
 import logging
 from ConfigParser import SafeConfigParser
 import tweetstream
+import urllib
 from neo4jrestclient.client import GraphDatabase
 
 default_config_location = "ingest.conf"
@@ -88,7 +89,12 @@ singleton, though that is not enforced."""
 
         for url in entities['urls']:
             #TODO: Dereference URL to something canonical
-            url_nodes.append(self.index_item(self.urlIndex, url["url"]))
+#             long_url = urllib.urlopen(url);
+#             if long_url.getcode() == 200:
+#                 url_nodes.append(self.index_item(self.urlIndex, url["long_url.url"]))
+#                 print long_url.url;
+#             else: 
+                url_nodes.append(self.index_item(self.urlIndex, url["url"]))
 
         if tag_nodes:
             self.tweets_with_hashtags += 1
