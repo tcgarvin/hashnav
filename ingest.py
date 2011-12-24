@@ -3,12 +3,17 @@
 # Injests a lite twitter data stream into the local neo4j graphdb.
 
 import logging
+from ConfigParser import SafeConfigParser
 import tweetstream
 from neo4jrestclient.client import GraphDatabase
+
+default_config_location = "ingest.conf"
+sample_config_location = "ingest.conf.sample"
 
 class Ingestion:
     """Each instance represents one ingestion action.  Intended to be used as a
 singleton, though that is not enforced."""
+
 
     def __init__(self, url="", dryrun=False):
         self.db = None 
@@ -17,6 +22,7 @@ singleton, though that is not enforced."""
         self.dryrun = dryrun
 
         if (not dryrun):
+            logging.info('Accessing neo4j db at "' + url + '"')
             self.db = GraphDatabase(url)
             self.tagIndex = self.db.nodes.indexes.get("hashtags")
             self.userIndex = self.db.nodes.indexes.get("users")
@@ -93,12 +99,34 @@ singleton, though that is not enforced."""
         if url_nodes:
             self.tweets_with_links += 1
 
-        #If there are entities to link to: link the author to each one.
-        #author_name = self.normalize_username(tweet["user"]["screen_name"])
-        #author = self.index_item(self.userIndex, author_name)
-        #self.link(author, "Posted", tag_nodes)
-        #self.link(author, "Posted", url_nodes)
-        #self.link(author, "Posted", user_nodes)
+        #Potential Relationships to be graphed..  need to decide if 
+        #All entities collected (nodes created/found), now we draw edges.
+        #User -> Posted -> Hashtag
+        #User -> Posted -> URL
+        #User -> Posted -> User
+        #
+        #User -> RT'd -> User  (Directional Relationship)
+        #RT'd user -> Posted(Update) -> Hashtag, URL, User
+        #Hashtag -> PostedWith -> Hashtag
+        #Hashtag -> Tagged -> User (Even if the user is being RT'd?)
+        #Hashtag -> Tagged -> URL
+        #URL -> PostedWith -> URL
+        #URL -> Tagged -> Hashtag
+        #URL -> PostedWith -> User (Again, even if the user is being RT'd?)
+        #User -> PostedWith -> User (not for RTs)
+        #User -> PostedWith -> URL
+        #User -> Tagged -> Hashtag
+
+        # It's probably not too useful to keep track of who's posting, because
+        # we get such a small % of tweets.  We can always put this back if we
+        # need to.
+        #
+        # If there are entities to link to: link the author to each one.
+        # author_name = self.normalize_username(tweet["user"]["screen_name"])
+        # author = self.index_item(self.userIndex, author_name)
+        # self.link(author, "Posted", tag_nodes)
+        # self.link(author, "Posted", url_nodes)
+        # self.link(author, "Posted", user_nodes)
 
         # For each entity we've gathered, link it with all the other entities.
         for tag in tag_nodes:
@@ -123,8 +151,6 @@ singleton, though that is not enforced."""
                 #User -> RT'd -> User
                 #RT'd user -> RT'dBy -> User
                 #RT'd user -> Posted(Update) -> Hashtag, URL, User
-
-
                 #Hashtag -> PostedWith -> Hashtag
                 #Hashtag -> PostedWith -> User (Not if the user is being RT'd)
                 #Hashtag -> PostedWith -> URL
@@ -183,20 +209,40 @@ singleton, though that is not enforced."""
     
 # Main Program
 if __name__ == "__main__":
-    # Parse Arguments
+    # We only use these libraries when running as a script.
+    from os import sys
     import argparse
+
+    # Parse Arguments
     argparser = argparse.ArgumentParser(description="Ingests twitter's streaming/sample feed.")
+    argparser.add_argument('-c', '--config',
+        help="config file to use. Defaults to " + default_config_location + ".",
+        action="store")
     argparser.add_argument('-d', '--dry',
-        help="Perform a dry run, no database access (Implies -v)",
+        help="perform a dry run, no database access. (Implies -v)",
         action="store_true")
-    argparser.add_argument('-v', help="Verbose", action="store_true")
-    argparser.add_argument('--debug', help="Enable debugging code",
+    argparser.add_argument('-v', help="verbose", action="store_true")
+    argparser.add_argument('--debug',
+        help="enable debugging code. (Implies -v)",
         action="store_true")
     args = argparser.parse_args()
 
     # Logical conclusion of args
     if args.dry:
         args.v = True
+
+    if args.config is None:
+       args.config = default_config_location
+
+    #Load Config
+    config = SafeConfigParser()
+    try :
+        config.read(args.config)
+    except Exception as e:
+        print "Error loading", args.config + ":", e, e.message
+        print "If unsure how to config, see", sample_config_location
+        sys.exit(1)
+
 
     # Set up Logging
     logging_level = logging.WARNING
@@ -208,6 +254,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging_level)
 
     #The Ingestion Action
-    db = Ingestion("http://localhost:7474/db/data",
+    db = Ingestion(config.get("neo4j", "db_url"),
             dryrun=args.dry)
-    db.process_twitter_stream("tcgarvin_test","thisisatest")
+    db.process_twitter_stream(config.get("twitter", "username"),
+                              config.get("twitter", "password"))

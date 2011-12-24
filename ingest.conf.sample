@@ -1,0 +1,11 @@
+# This is a sample configuration of ingest.py.  Replace the username and
+# password with those of your own.
+
+[neo4j]
+# The REST URL
+db_url: http://localhost:7474/db/data
+
+[twitter]
+# Your twitter username and password.
+username: sampleusername
+password: samplepasswd
