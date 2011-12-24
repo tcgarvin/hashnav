@@ -243,7 +243,9 @@ if __name__ == "__main__":
     #Load Config
     config = SafeConfigParser()
     try :
-        config.read(args.config)
+        fp = open(args.config)
+        config.readfp(fp)
+        fp.close()
     except Exception as e:
         print "Error loading", args.config + ":", e, e.message
         print "If unsure how to config, see", sample_config_location
