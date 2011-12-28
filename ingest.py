@@ -88,13 +88,16 @@ singleton, though that is not enforced."""
             user_nodes.append(self.index_item(self.userIndex, user_text))
 
         for url in entities['urls']:
-            #TODO: Dereference URL to something canonical
-#             long_url = urllib.urlopen(url);
-#             if long_url.getcode() == 200:
-#                 url_nodes.append(self.index_item(self.urlIndex, url["long_url.url"]))
-#                 print long_url.url;
-#             else: 
-                url_nodes.append(self.index_item(self.urlIndex, url["url"]))
+#             print url["url"]
+            try:
+                long_url = urllib.urlopen(url["url"])
+            except IOError: 
+                print "IOError in url proccessing." 
+            else:
+                if long_url.getcode() == 200:
+                    url_nodes.append(self.index_item(self.urlIndex, long_url.url))
+                else: 
+                    url_nodes.append(self.index_item(self.urlIndex, url["url"]))
 
         if tag_nodes:
             self.tweets_with_hashtags += 1
@@ -261,8 +264,12 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging_level)
 
-    #The Ingestion Action
-    db = Ingestion(config.get("neo4j", "db_url"),
-            dryrun=args.dry)
-    db.process_twitter_stream(config.get("twitter", "username"),
+    while True:
+        #The Ingestion Action
+        db = Ingestion(config.get("neo4j", "db_url"),
+             dryrun=args.dry)
+        try:
+            db.process_twitter_stream(config.get("twitter", "username"),
                               config.get("twitter", "password"))
+        except tweetstream.ConnectionError:
+            print "ConnectionError caught."

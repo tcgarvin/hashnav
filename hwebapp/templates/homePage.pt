@@ -70,7 +70,7 @@ div.sidebar a:hover {
 </div>
 
 <script type="text/javascript">
-var typeclass = { user: "nodeuser", url: "nodeurl", tag: "nodetag" };
+var typeclass = { user: "nodeuser", url: "nodeurl", tag: "nodeuser" };
 var testtypes = ["nodeuser", "nodeurl", "nodetag", "", "", "", "","","","","","","","","","","","","",""];
 var vis; 
 var force, link, node;
@@ -264,11 +264,17 @@ function sort_descending(a,b) {
 function load_tweet_links() {
     sort_tweet_links();
     var new_lis = "";
+    var url;
+    var base_url;
     var i;
     for (i=0; i < urls.length; i++) {
+        url = urls_data[1][i];
+        base_url = url.substr(url.indexOf("//")+2, url.length);
+        //alert("base_url: " + base_url);
+        base_url = base_url.substr(0, base_url.indexOf("/")-0);
         //new_lis +="<li> (" + urls_data[0][i] + ") <a href=\"" + urls_data[1][i] + "\" target=\"_blank\">" + 
-        new_lis +="<li> <a href=\"" + urls_data[1][i] + "\" target=\"_blank\">" + 
-            urls_data[1][i] + "</li>";
+        new_lis +="<li> <a href=\"" + url + "\" target=\"_blank\">" + 
+            base_url + "...</li>";
     }
     document.getElementById('tweet_links').innerHTML += new_lis;
 }
